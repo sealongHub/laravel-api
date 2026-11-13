@@ -6,7 +6,8 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
 use App\Models\Product;
 use App\Models\Order;
-use App\Models\order_details as OrderDetail;
+
+use App\Models\OrderDetail;
 use App\Models\User;
 use App\Models\Profile;
 use Illuminate\Support\Facades\DB;
