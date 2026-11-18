@@ -25,6 +25,20 @@ Laravel is accessible, powerful, and provides tools required for large, robust a
 
 Set `BLOB_READ_WRITE_TOKEN` and `BLOB_STORE_ID` in the Laravel `.env` file. Keep the read-write token server-side and never expose it to the frontend. The shared `uploadImage($folderName, $imageFile)` helper converts supported raster images to WebP at quality 80 without resizing, then uploads and returns the Vercel URL; existing image database fields store that URL. SVG uploads are not supported. `getImage($value)` returns Vercel URLs unchanged and resolves legacy Laravel storage paths.
 
+## Deploying the monorepo to Vercel
+
+The repository root `vercel.json` routes the React frontend and Laravel API to separate containers. In Vercel, import the repository with its **Root Directory** set to the repository root and select the **Container** framework preset (Beta). The containers expose the API under `/api` on the same origin as the frontend.
+
+Configure these Vercel environment variables before deploying:
+
+- `APP_KEY` and `JWT_SECRET` (secrets)
+- `APP_URL` (production Vercel URL; previews can use the platform-provided `VERCEL_URL`)
+- `DB_CONNECTION=mysql`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD` for a managed MySQL database
+- `BLOB_READ_WRITE_TOKEN` and `BLOB_STORE_ID` for Vercel Blob
+- `CACHE_STORE=database`, `SESSION_DRIVER=array`, `QUEUE_CONNECTION=sync`, and `LOG_CHANNEL=stderr`
+
+Do not use the bundled SQLite file for production: Vercel container filesystems are not a durable database. After setting the database variables, run `php artisan migrate --force` once against the managed MySQL database. The web container routes React Router paths to `index.html`; `/api` and `/storage` are routed to Laravel.
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
