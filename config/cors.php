@@ -7,7 +7,7 @@ $allowedOrigins = preg_replace(
 );
 
 return [
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['*'],
     'allowed_methods' => ['*'],
     'allowed_origins' => array_filter(array_map('trim', explode(',', $allowedOrigins))),
     'allowed_origins_patterns' => [],
