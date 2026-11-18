@@ -39,6 +39,12 @@ Configure these Vercel environment variables before deploying:
 
 Do not use the bundled SQLite file for production: Vercel container filesystems are not a durable database. After setting the database variables, run `php artisan migrate --force` once against the managed MySQL database. The web container routes React Router paths to `index.html`; `/api` and `/storage` are routed to Laravel.
 
+## Deploying Laravel as a separate Vercel project
+
+Create a separate Vercel project from this repository and set its **Root Directory** to `laravel-api`. The `laravel-api/vercel.json` file routes all requests to the Laravel Docker container. Select the **Container** framework preset (Beta), and configure the backend environment variables listed above. Set `APP_URL` to the backend deployment URL.
+
+Keep the React project separate with its **Root Directory** set to `web_pos`. Set `VITE_API_URL` in the frontend project to the backend URL ending in `/api/`, and set `VITE_IMAGE_BASE_URL` to the backend URL ending in `/storage/` for legacy local-storage image paths. These are build-time variables, so redeploy the frontend after changing them. The React build output stays in `web_pos/dist`; an API-only Laravel project does not need that `dist` folder.
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
