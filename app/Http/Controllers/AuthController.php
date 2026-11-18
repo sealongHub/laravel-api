@@ -22,7 +22,7 @@ class AuthController extends Controller
             "phone"     => "required|string",
             "address"   => "required|string",
             "type"      => "nullable|string|in:super_admin,manager,product_staff,sales_staff",
-            "image"     => "nullable|image|mimes:jpeg,jpg,png,gif|max:2048",
+            "image"     => "nullable|image|mimes:jpeg,jpg,png,gif,bmp,webp|max:2048",
         ]);
 
         // ✅ Create user
@@ -35,7 +35,7 @@ class AuthController extends Controller
         // ✅ Handle image upload
         $imagePath = null;
         if ($rq->hasFile('image') && $rq->file('image')->isValid()) {
-            $imagePath = $rq->file('image')->store('profiles', 'public');
+            $imagePath = uploadImage('profiles', $rq->file('image'));
         }
 
         // ✅ Save profile
@@ -108,7 +108,7 @@ class AuthController extends Controller
             "message"      => "Login Successful",
             "access_token" => $token,
             "users"        => $user,
-            "image"        => $user->profiles?->imagee ?? null,
+            "image"        => getImage($user->profiles?->imagee),
         ]);
     }
 
@@ -156,7 +156,7 @@ class AuthController extends Controller
             "message"      => "Login Successful",
             "access_token" => $token,
             "users"        => $user,
-            "image"        => $user->profiles?->imagee ?? null,
+            "image"        => getImage($user->profiles?->imagee),
         ]);
     }
 }

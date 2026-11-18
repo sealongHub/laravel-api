@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Brand;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class BrandController extends Controller
 {
@@ -52,14 +51,13 @@ class BrandController extends Controller
             'code' => 'required|unique:brands,code',
             'description' => 'nullable|string',
             'status' => 'required|in:active,inactive',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,bmp,webp|max:2048',
         ]);
 
-        $data = $request->all();
+        $data = $request->except('image');
 
-        if($data['image']){
-            $imagePath = $request->file('image')->store('brands', 'public');
-            $data['image'] = $imagePath;
+        if ($request->hasFile('image')) {
+            $data['image'] = uploadImage('brands', $request->file('image'));
         }
 
         $brand = Brand::create($data);
@@ -98,23 +96,20 @@ class BrandController extends Controller
             'code' => 'required|unique:brands,code,'.$id,
             'description' => 'nullable|string',
             'status' => 'required|in:active,inactive',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,bmp,webp|max:2048',
         ]);
 
-        $data = $request->all();
+        $data = $request->except('image');
 
-        if($request->hasFile('image')){
-            if($brand->image){
-                Storage::disk('public')->delete($brand->image);
-            }
-            $imagePath = $request->file('image')->store('brands', 'public');
-            $data['image'] = $imagePath;
+        if ($request->hasFile('image')) {
+            $newImage = uploadImage('brands', $request->file('image'));
+            deleteImage($brand->image);
+            $data['image'] = $newImage;
         }
 
-        if($request->filled('image_remove')){
-            Storage::disk('public')->delete($brand->image);
-
-            $brand->image = null;
+        if ($request->boolean('image_remove')) {
+            deleteImage($brand->image);
+            $data['image'] = null;
         }
 
 
@@ -133,9 +128,7 @@ class BrandController extends Controller
     {
         $brand = Brand::find($brand->id);
 
-        if($brand->image){
-            Storage::disk('public')->delete($brand->image);
-        }
+        deleteImage($brand->image);
         $brand->delete();
 
         return response()->json([

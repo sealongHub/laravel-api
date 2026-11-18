@@ -22,7 +22,7 @@ class purchaseController extends Controller
             'payment_method' => 'required|string',
             'total' => 'required|numeric',
             'items' => 'required|string', // ប្រាកដថាផ្ញើជា JSON string មក
-            'transaction_image' => 'nullable|file|image|max:2048',
+            'transaction_image' => 'nullable|file|image|mimes:jpeg,jpg,png,gif,bmp,webp|max:2048',
             'note' => 'nullable|string',
             'delivery_fee' => 'nullable|numeric',
         ]);
@@ -33,7 +33,7 @@ class purchaseController extends Controller
             // ✅ Handle uploaded transaction image
             $imagePath = null;
             if ($request->hasFile('transaction_image')) {
-                $imagePath = $request->file('transaction_image')->store('transactions', 'public');
+                $imagePath = uploadImage('transactions', $request->file('transaction_image'));
             }
 
             // ✅ Insert order
@@ -124,11 +124,9 @@ class purchaseController extends Controller
                     . "🛒 *Items:*\n" . ($itemsText ?: "No items listed.");
 
                 if ($order->transaction_image) {
-                    $imagePathFull = storage_path('app/public/' . $order->transaction_image);
-                    Http::attach(
-                        'photo', file_get_contents($imagePathFull), basename($imagePathFull)
-                    )->post("https://api.telegram.org/bot{$botToken}/sendPhoto", [
+                    Http::post("https://api.telegram.org/bot{$botToken}/sendPhoto", [
                         'chat_id' => $chatId,
+                        'photo' => getImage($order->transaction_image),
                         'caption' => $caption,
                         'parse_mode' => 'Markdown',
                     ]);

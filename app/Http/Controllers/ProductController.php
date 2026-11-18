@@ -7,9 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\Brand;
 use App\Models\Supplier;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 
 class ProductController extends Controller
@@ -81,42 +79,22 @@ class ProductController extends Controller
         'category_id' => 'required|exists:categories,id',
         'brand_id' => 'required|exists:brands,id',
         'status' => 'required', // ដក boolean ចេញសិន បើផ្ញើពី FormData អាចជា string "1"
-        'image' => 'nullable|image|max:2048',
+        'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,bmp,webp|max:2048',
     ]);
 
-    $data = $request->all();
+    $data = $request->except('image');
     $data['quantity'] = $request->input('quantity', 0);
 
-    try {
-        if ($request->hasFile('image')) {
-            // ប្រើរបៀបនេះវិញ
-            $uploadedFile = $request->file('image');
-            $result = Cloudinary::upload($uploadedFile->getRealPath(), [
-                'folder' => 'products'
-            ]);
-            
-            // ឆែកមើលថា តើវា upload បានពិតមែនឬអត់
-            if ($result) {
-                $data['image'] = $result->getSecurePath();
-            }
-        }
-
-        // បង្កើត Product ក្នុង Database
-        $product = Product::create($data);
-
-        return response()->json([
-            'message' => 'Product created successfully',
-            'test_config' => config('cloudinary.cloud_url'), // បង្ហាញ config ដើម្បីតេស្ត
-            'data' => $product,
-        ], 201);
-
-    } catch (\Exception $e) {
-        // បើគាំងត្រង់ Cloudinary វានឹងប្រាប់សារ Error ច្បាស់ៗមកវិញ
-        return response()->json([
-            'error' => 'Server Error: ' . $e->getMessage(),
-            'hint' => 'Please run php artisan config:clear'
-        ], 500);
+    if ($request->hasFile('image')) {
+        $data['image'] = uploadImage('products', $request->file('image'));
     }
+
+    $product = Product::create($data);
+
+    return response()->json([
+        'message' => 'Product created successfully',
+        'data' => $product,
+    ], 201);
 }
 
     /**
@@ -135,23 +113,21 @@ class ProductController extends Controller
             'category_id' => 'required|integer',
             'brand_id'    => 'required|integer',
             'status'      => 'required',
+            'image'       => 'nullable|image|mimes:jpeg,jpg,png,gif,bmp,webp|max:2048',
         ]);
 
         $data = $request->only(['name', 'code', 'price', 'quantity', 'category_id', 'brand_id', 'supplier_id', 'status']);
 
         // Handle Image Upload
         if ($request->hasFile('image')) {
-            if ($pro->image && Storage::disk('public')->exists($pro->image)) {
-                Storage::disk('public')->delete($pro->image);
-            }
-            $data['image'] = $request->file('image')->store('products', 'public');
+            $newImage = uploadImage('products', $request->file('image'));
+            deleteImage($pro->image);
+            $data['image'] = $newImage;
         }
 
         // Handle Image Removal
-        if ($request->image_remove == 'true') {
-            if ($pro->image) {
-                Storage::disk('public')->delete($pro->image);
-            }
+        if ($request->boolean('image_remove')) {
+            deleteImage($pro->image);
             $data['image'] = null;
         }
 
@@ -178,9 +154,7 @@ class ProductController extends Controller
     {
         $pro = Product::findOrFail($id);
 
-        if($pro->image){
-            Storage::disk('public')->delete($pro->image);
-        }
+        deleteImage($pro->image);
 
         $pro->delete();
 

@@ -35,15 +35,14 @@ class FounderImageController extends Controller
     {
         $request->validate([
             'title' => 'required|string|max:50',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,bmp,webp|max:2048',
             'description' => 'nullable|string',
         ]);
 
-        $data = $request->all();
+        $data = $request->except('image');
 
-        if($data['image']){
-            $imagePath = $request->file('image')->store('founderimages', 'public');
-            $data['image'] = $imagePath;
+        if ($request->hasFile('image')) {
+            $data['image'] = uploadImage('founderimages', $request->file('image'));
         }
 
         $founderImage = FounderImage::create($data);
@@ -72,63 +71,27 @@ class FounderImageController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    // public function update(Request $request, $id)
-    // {
-    //     $founderImage = FounderImage::find($id);
-
-    //     $request->validate([
-            
-    //         'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-    //     ]);
-
-    //     $data = $request->all();
-
-    //     if($request->hasFile('image')){
-    //         if($founderImage->image){
-    //             Storage::disk('public')->delete($founderImage->image);
-    //         }
-    //         $imagePath = $request->file('image')->store('founderimages', 'public');
-    //         $data['image'] = $imagePath;
-    //     }
-
-    //     if($request->filled('image_remove')){
-    //         Storage::disk('public')->delete($founderImage->image);
-
-    //         $founderImage->image = null;
-    //     }
-
-
-    //     $founderImage->update($data);
-    //     return response()->json([
-    //         'message' => 'Founder Image updated successfully',
-    //         'data' => $founderImage,
-    //     ], 201);
-    // }
-
     public function update(Request $request, $id)
     {
         $founderImage = FounderImage::find($id);
 
         $request->validate([
             'title' => 'required|string|max:50',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,bmp,webp|max:2048',
             'description' => 'nullable|string',
         ]);
 
-        $data = $request->all();
+        $data = $request->except('image');
 
-        if($request->has('image')){
-            if($founderImage->image){
-                Storage::disk('public')->delete($founderImage->image);
-            }
-            $imagePath = $request->file('image')->store('founderimages', 'public');
-            $data['image'] = $imagePath;
+        if ($request->hasFile('image')) {
+            $newImage = uploadImage('founderimages', $request->file('image'));
+            deleteImage($founderImage->image);
+            $data['image'] = $newImage;
         }
 
-        if($request->filled('image_remove')){
-            Storage::disk('public')->delete($founderImage->image);
-
-            $founderImage->image = null;
+        if ($request->boolean('image_remove')) {
+            deleteImage($founderImage->image);
+            $data['image'] = null;
         }
 
         $founderImage->update($data);
@@ -145,9 +108,7 @@ class FounderImageController extends Controller
     {
         $founderImageToDelete = FounderImage::find($id);
 
-        if($founderImageToDelete->image){
-            Storage::disk('public')->delete($founderImageToDelete->image);
-        }
+        deleteImage($founderImageToDelete->image);
         $founderImageToDelete->delete();
 
         return response()->json([

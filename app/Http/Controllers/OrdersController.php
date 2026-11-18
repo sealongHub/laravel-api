@@ -39,7 +39,7 @@ class OrdersController extends Controller
             'payment_method' => 'required|string',
             'total' => 'required|numeric',
             'items' => 'required|string', // ទទួលជា JSON string ពី FormData
-            'transaction_image' => 'nullable|image|max:5120',
+            'transaction_image' => 'nullable|image|mimes:jpeg,jpg,png,gif,bmp,webp|max:5120',
         ]);
 
         // បំប្លែង items ពី JSON string ទៅជា Array
@@ -49,12 +49,9 @@ class OrdersController extends Controller
             return response()->json(['success' => false, 'message' => 'Invalid items data.'], 400);
         }
 
-        // Handle uploaded transaction image: store under storage/app/public/transactions
         $transactionFileName = null;
         if ($request->hasFile('transaction_image')) {
-            $file = $request->file('transaction_image');
-            $transactionFileName = time() . '_' . preg_replace('/[^A-Za-z0-9._-]/', '_', $file->getClientOriginalName());
-            $file->storeAs('public/transactions', $transactionFileName);
+            $transactionFileName = uploadImage('transactions', $request->file('transaction_image'));
         }
 
         DB::beginTransaction();

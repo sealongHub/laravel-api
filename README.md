@@ -21,6 +21,10 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
+## Vercel Blob image uploads
+
+Set `BLOB_READ_WRITE_TOKEN` and `BLOB_STORE_ID` in the Laravel `.env` file. Keep the read-write token server-side and never expose it to the frontend. The shared `uploadImage($folderName, $imageFile)` helper converts supported raster images to WebP at quality 80 without resizing, then uploads and returns the Vercel URL; existing image database fields store that URL. SVG uploads are not supported. `getImage($value)` returns Vercel URLs unchanged and resolves legacy Laravel storage paths.
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.

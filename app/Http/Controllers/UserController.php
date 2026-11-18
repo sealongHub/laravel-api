@@ -36,6 +36,9 @@ class UserController extends Controller
         $items = $users->items();
         foreach ($items as $u) {
             $u->type = $u->profiles?->type ?? 'staff';
+            if ($u->profiles) {
+                $u->profiles->imagee = getImage($u->profiles->imagee);
+            }
         }
 
         return response()->json([
@@ -59,7 +62,7 @@ class UserController extends Controller
             'phone'   => 'required|string',
             'address' => 'required|string',
             'type'    => 'nullable|string|in:super_admin,manager,product_staff,sales_staff',
-            'image'   => 'nullable|image|mimes:jpeg,jpg,png,gif|max:2048',
+            'image'   => 'nullable|image|mimes:jpeg,jpg,png,gif,bmp,webp|max:2048',
         ]);
 
         $user->update([
@@ -70,7 +73,8 @@ class UserController extends Controller
         // ✅ Update profile (store type in profiles table)
         $imagePath = $user->profiles?->imagee;
         if ($request->hasFile('image') && $request->file('image')->isValid()) {
-            $imagePath = $request->file('image')->store('profiles', 'public');
+            $imagePath = uploadImage('profiles', $request->file('image'));
+            deleteImage($user->profiles?->imagee);
         }
 
         $profileData = [
