@@ -1,12 +1,15 @@
 <?php
 
+$allowedOrigins = preg_replace(
+    '/\s*\/+\s*(?=,|$)/',
+    '',
+    env('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,https://web-pos-ten-silk.vercel.app')
+);
+
 return [
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
     'allowed_methods' => ['*'],
-    'allowed_origins' => array_filter(array_map(
-        'trim',
-        explode(',', env('CORS_ALLOWED_ORIGINS', 'https://web-pos-ten-silk.vercel.app/'))
-    )),
+    'allowed_origins' => array_filter(array_map('trim', explode(',', $allowedOrigins))),
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],
     'exposed_headers' => [],

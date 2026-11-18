@@ -34,12 +34,12 @@ Configure these Vercel environment variables before deploying:
 - `APP_KEY` and `JWT_SECRET` (secrets)
 - `DB_CONNECTION=mysql`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD` for a managed MySQL database
 - `BLOB_READ_WRITE_TOKEN` and `BLOB_STORE_ID` for Vercel Blob
-- `CORS_ALLOWED_ORIGINS` set to the frontend's exact origin(s), comma-separated if needed
+- `CORS_ALLOWED_ORIGINS` set to the frontend's exact origin(s), comma-separated if needed (no trailing slash)
 - `CACHE_STORE=database`, `SESSION_DRIVER=array`, `QUEUE_CONNECTION=sync`, and `LOG_CHANNEL=stderr`
 
 Do not use the bundled SQLite file for production: Vercel container filesystems are not a durable database. After setting the database variables, run `php artisan migrate --force` once against the managed MySQL database.
 
-Deploy React as a second Vercel project with **Root Directory** set to `web_pos`. Set `VITE_API_URL` to the backend URL ending in `/api/`, and `VITE_IMAGE_BASE_URL` to the backend URL ending in `/storage/` for legacy local-storage image paths. These are build-time variables, so redeploy the frontend after changing them. The React build output stays in `web_pos/dist`; an API-only Laravel project does not need that `dist` folder.
+Deploy React as a second Vercel project with **Root Directory** set to `web_pos`. Set `VITE_API_URL` to the backend URL ending in `/api/`, and `VITE_IMAGE_BASE_URL` to the backend URL ending in `/storage/` for legacy local-storage image paths. These are build-time variables, so redeploy the frontend after changing them. The React build output stays in `web_pos/dist`; an API-only Laravel project does not need that `dist` folder. `web_pos/vercel.json` rewrites React Router URLs such as `/dashboard` to the SPA entry point.
 
 ## Learning Laravel
 
