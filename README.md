@@ -25,25 +25,21 @@ Laravel is accessible, powerful, and provides tools required for large, robust a
 
 Set `BLOB_READ_WRITE_TOKEN` and `BLOB_STORE_ID` in the Laravel `.env` file. Keep the read-write token server-side and never expose it to the frontend. The shared `uploadImage($folderName, $imageFile)` helper converts supported raster images to WebP at quality 80 without resizing, then uploads and returns the Vercel URL; existing image database fields store that URL. SVG uploads are not supported. `getImage($value)` returns Vercel URLs unchanged and resolves legacy Laravel storage paths.
 
-## Deploying the monorepo to Vercel
+## Deploying Laravel as a separate Vercel project
 
-The repository root `vercel.json` routes the React frontend and Laravel API to separate containers. In Vercel, import the repository with its **Root Directory** set to the repository root and select the **Container** framework preset (Beta). The containers expose the API under `/api` on the same origin as the frontend.
+Create a separate Vercel project from this repository and set its **Root Directory** to `laravel-api`. The `laravel-api/vercel.json` file routes all requests to the Laravel Docker container. Select the **Container** framework preset (Beta). Set `APP_URL` to the backend deployment URL.
 
 Configure these Vercel environment variables before deploying:
 
 - `APP_KEY` and `JWT_SECRET` (secrets)
-- `APP_URL` (production Vercel URL; previews can use the platform-provided `VERCEL_URL`)
 - `DB_CONNECTION=mysql`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD` for a managed MySQL database
 - `BLOB_READ_WRITE_TOKEN` and `BLOB_STORE_ID` for Vercel Blob
+- `CORS_ALLOWED_ORIGINS` set to the frontend's exact origin(s), comma-separated if needed
 - `CACHE_STORE=database`, `SESSION_DRIVER=array`, `QUEUE_CONNECTION=sync`, and `LOG_CHANNEL=stderr`
 
-Do not use the bundled SQLite file for production: Vercel container filesystems are not a durable database. After setting the database variables, run `php artisan migrate --force` once against the managed MySQL database. The web container routes React Router paths to `index.html`; `/api` and `/storage` are routed to Laravel.
+Do not use the bundled SQLite file for production: Vercel container filesystems are not a durable database. After setting the database variables, run `php artisan migrate --force` once against the managed MySQL database.
 
-## Deploying Laravel as a separate Vercel project
-
-Create a separate Vercel project from this repository and set its **Root Directory** to `laravel-api`. The `laravel-api/vercel.json` file routes all requests to the Laravel Docker container. Select the **Container** framework preset (Beta), and configure the backend environment variables listed above. Set `APP_URL` to the backend deployment URL.
-
-Keep the React project separate with its **Root Directory** set to `web_pos`. Set `VITE_API_URL` in the frontend project to the backend URL ending in `/api/`, and set `VITE_IMAGE_BASE_URL` to the backend URL ending in `/storage/` for legacy local-storage image paths. These are build-time variables, so redeploy the frontend after changing them. The React build output stays in `web_pos/dist`; an API-only Laravel project does not need that `dist` folder.
+Deploy React as a second Vercel project with **Root Directory** set to `web_pos`. Set `VITE_API_URL` to the backend URL ending in `/api/`, and `VITE_IMAGE_BASE_URL` to the backend URL ending in `/storage/` for legacy local-storage image paths. These are build-time variables, so redeploy the frontend after changing them. The React build output stays in `web_pos/dist`; an API-only Laravel project does not need that `dist` folder.
 
 ## Learning Laravel
 

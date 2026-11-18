@@ -26,6 +26,9 @@
         "nunomaduro/collision": "^8.6",
         "phpunit/phpunit": "^11.5.3"
     },
+    "conflict": {
+        "lcobucci/clock": "2.3.0"
+    },
     "autoload": {
         "files": [
             "app/helpers.php"
