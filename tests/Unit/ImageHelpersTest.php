@@ -9,7 +9,7 @@ use Tests\TestCase;
 
 class ImageHelpersTest extends TestCase
 {
-    public function test_upload_image_returns_vercel_url_and_uses_configured_folder(): void
+    public function test_upload_image_returns_vercel_url_and_preserves_the_original_image(): void
     {
         config([
             'services.vercel_blob.token' => 'test-token',
@@ -32,18 +32,18 @@ class ImageHelpersTest extends TestCase
         );
 
         Http::assertSent(function (ClientRequest $request) {
-            $convertedImage = getimagesizefromstring($request->body());
+            $uploadedImage = getimagesizefromstring($request->body());
 
             return $request->method() === 'PUT'
                 && str_contains($request->url(), 'pathname=brands%2F')
-                && str_contains($request->url(), '.webp')
+                && str_contains($request->url(), '.png')
                 && $request->hasHeader('authorization', 'Bearer test-token')
                 && $request->hasHeader('x-vercel-blob-access', 'public')
-                && $request->hasHeader('x-content-type', 'image/webp')
-                && $convertedImage !== false
-                && $convertedImage['mime'] === 'image/webp'
-                && $convertedImage[0] === 32
-                && $convertedImage[1] === 24;
+                && $request->hasHeader('x-content-type', 'image/png')
+                && $uploadedImage !== false
+                && $uploadedImage['mime'] === 'image/png'
+                && $uploadedImage[0] === 32
+                && $uploadedImage[1] === 24;
         });
     }
 

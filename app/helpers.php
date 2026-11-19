@@ -30,52 +30,6 @@ if (! function_exists('vercelBlobHeaders')) {
 }
 
 if (! function_exists('uploadImage')) {
-    function compressImageToWebp(UploadedFile $image): string
-    {
-        if (! function_exists('imagecreatefromstring') || ! function_exists('imagewebp')) {
-            throw new RuntimeException('GD with WebP support is required to upload images.');
-        }
-
-        $sourceContents = file_get_contents($image->getRealPath());
-        if ($sourceContents === false) {
-            throw new RuntimeException('The uploaded image could not be read.');
-        }
-
-        $source = @imagecreatefromstring($sourceContents);
-        if ($source === false) {
-            throw new RuntimeException('The uploaded image could not be converted to WebP.');
-        }
-
-        $temporaryPath = tempnam(sys_get_temp_dir(), 'webp-');
-        if ($temporaryPath === false) {
-            imagedestroy($source);
-            throw new RuntimeException('A temporary file could not be created for image conversion.');
-        }
-
-        try {
-            if (function_exists('imagepalettetotruecolor')) {
-                imagepalettetotruecolor($source);
-            }
-
-            imagealphablending($source, false);
-            imagesavealpha($source, true);
-
-            if (! imagewebp($source, $temporaryPath, 80)) {
-                throw new RuntimeException('The uploaded image could not be encoded as WebP.');
-            }
-
-            $webpContents = file_get_contents($temporaryPath);
-            if ($webpContents === false) {
-                throw new RuntimeException('The compressed WebP image could not be read.');
-            }
-
-            return $webpContents;
-        } finally {
-            imagedestroy($source);
-            unlink($temporaryPath);
-        }
-    }
-
     function uploadImage(string $folderName, UploadedFile $image): string
     {
         $folderName = trim($folderName, '/');
@@ -86,17 +40,35 @@ if (! function_exists('uploadImage')) {
         }
 
         $headers = vercelBlobHeaders();
-        $pathname = $folderName . '/' . Str::uuid() . '.webp';
-        $contents = compressImageToWebp($image);
+        $mimeType = $image->getMimeType();
+        $extensions = [
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/gif' => 'gif',
+            'image/bmp' => 'bmp',
+            'image/x-ms-bmp' => 'bmp',
+            'image/webp' => 'webp',
+        ];
+
+        if (! is_string($mimeType) || ! isset($extensions[$mimeType])) {
+            throw new RuntimeException('The uploaded image type is not supported.');
+        }
+
+        $contents = file_get_contents($image->getRealPath());
+        if ($contents === false) {
+            throw new RuntimeException('The uploaded image could not be read.');
+        }
+
+        $pathname = $folderName . '/' . Str::uuid() . '.' . $extensions[$mimeType];
 
         $response = Http::timeout(30)
             ->withHeaders(array_merge($headers, [
                 'x-vercel-blob-access' => 'public',
                 'x-add-random-suffix' => '0',
-                'x-content-type' => 'image/webp',
+                'x-content-type' => $mimeType,
                 'x-content-length' => (string) strlen($contents),
             ]))
-            ->withBody($contents, 'image/webp')
+            ->withBody($contents, $mimeType)
             ->put('https://blob.vercel-storage.com/?' . http_build_query([
                 'pathname' => $pathname,
             ]));

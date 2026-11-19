@@ -102,49 +102,38 @@ class ProductController extends Controller
      */
     public function update(Request $request, $id)
 {
-    try {
-        $pro = Product::findOrFail($id);
+    $pro = Product::findOrFail($id);
 
-        $request->validate([
-            'name'        => 'required|string|max:100',
-            'code'        => 'required|unique:products,code,'.$id,
-            'supplier_id' => 'nullable|integer', // Ensure this matches DB column
-            'price'       => 'required|numeric',
-            'category_id' => 'required|integer',
-            'brand_id'    => 'required|integer',
-            'status'      => 'required',
-            'image'       => 'nullable|image|mimes:jpeg,jpg,png,gif,bmp,webp|max:2048',
-        ]);
+    $request->validate([
+        'name'        => 'required|string|max:100',
+        'code'        => 'required|unique:products,code,'.$id,
+        'supplier_id' => 'nullable|integer',
+        'price'       => 'required|numeric',
+        'category_id' => 'required|integer',
+        'brand_id'    => 'required|integer',
+        'status'      => 'required',
+        'image'       => 'nullable|image|mimes:jpeg,jpg,png,gif,bmp,webp|max:2048',
+    ]);
 
-        $data = $request->only(['name', 'code', 'price', 'quantity', 'category_id', 'brand_id', 'supplier_id', 'status']);
+    $data = $request->only(['name', 'code', 'price', 'quantity', 'category_id', 'brand_id', 'supplier_id', 'status']);
+    $previousImage = $pro->image;
 
-        // Handle Image Upload
-        if ($request->hasFile('image')) {
-            $newImage = uploadImage('products', $request->file('image'));
-            deleteImage($pro->image);
-            $data['image'] = $newImage;
-        }
-
-        // Handle Image Removal
-        if ($request->boolean('image_remove')) {
-            deleteImage($pro->image);
-            $data['image'] = null;
-        }
-
-        $pro->update($data);
-
-        return response()->json([
-            'message' => 'Product updated successfully',
-            'data' => $pro,
-        ]);
-
-    } catch (\Exception $e) {
-        // This will return the actual error message instead of just "500"
-        return response()->json([
-            'message' => 'Update failed',
-            'error' => $e->getMessage()
-        ], 500);
+    if ($request->hasFile('image')) {
+        $data['image'] = uploadImage('products', $request->file('image'));
+    } elseif ($request->boolean('image_remove')) {
+        $data['image'] = null;
     }
+
+    $pro->update($data);
+
+    if (array_key_exists('image', $data) && $previousImage && $previousImage !== $pro->image) {
+        deleteImage($previousImage);
+    }
+
+    return response()->json([
+        'message' => 'Product updated successfully',
+        'data' => $pro,
+    ]);
 }
 
     /**

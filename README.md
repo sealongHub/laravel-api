@@ -23,7 +23,7 @@ Laravel is accessible, powerful, and provides tools required for large, robust a
 
 ## Vercel Blob image uploads
 
-Set `BLOB_READ_WRITE_TOKEN` and `BLOB_STORE_ID` in the Laravel `.env` file. Keep the read-write token server-side and never expose it to the frontend. The shared `uploadImage($folderName, $imageFile)` helper converts supported raster images to WebP at quality 80 without resizing, then uploads and returns the Vercel URL; existing image database fields store that URL. SVG uploads are not supported. `getImage($value)` returns Vercel URLs unchanged and resolves legacy Laravel storage paths.
+Set `BLOB_READ_WRITE_TOKEN` and `BLOB_STORE_ID` in the Laravel `.env` file. Keep the read-write token server-side and never expose it to the frontend. The shared `uploadImage($folderName, $imageFile)` helper uploads supported raster images to Vercel Blob using their original format and returns the Vercel URL; existing image database fields store that URL. SVG uploads are not supported. `getImage($value)` returns Vercel URLs unchanged and resolves legacy Laravel storage paths.
 
 ## Deploying Laravel as a separate Vercel project
 
